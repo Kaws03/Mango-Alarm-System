@@ -141,7 +141,6 @@ void APP_Initialize ( void )
 
 void APP_Tasks ( void )
 {
-    int i;
     //SYS_CMD_READY_TO_READ();
     /* Check the application's current state. */
     switch ( appData.state )
@@ -151,12 +150,12 @@ void APP_Tasks ( void )
         {
             if (SYS_FS_Mount(SYS_FS_NVM_VOL, LOCAL_WEBSITE_PATH_FS, MPFS2, 0, NULL) == 0)
             {
+                nvmRead();
                 initADC();
                 initIO();
-                initLog();
                 initPower();
                 initGSM();
-                nvmRead();
+                initLog();
                 
                 appData.state = APP_STATE_SERVICE_TASKS;
             }
@@ -169,14 +168,10 @@ void APP_Tasks ( void )
 
         case APP_STATE_SERVICE_TASKS:
         {
-            for(i=4; i<8; i++)
-            {
-                setLed(i, getBtn(i));
-            }
-            
+            setNetwork();
             getLog();
             gsmService();
-                
+            
             break;
         }
 

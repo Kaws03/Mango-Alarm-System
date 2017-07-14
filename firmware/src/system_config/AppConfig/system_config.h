@@ -178,14 +178,14 @@ extern "C" {
 /*** NVM Driver Configuration ***/
 
 #define DRV_NVM_INSTANCES_NUMBER     	1
-#define DRV_NVM_CLIENTS_NUMBER        	1
+#define DRV_NVM_CLIENTS_NUMBER        	2
 #define DRV_NVM_BUFFER_OBJECT_NUMBER  	5
 
 #define DRV_NVM_INTERRUPT_MODE        	true
 #define DRV_NVM_INTERRUPT_SOURCE      	INT_SOURCE_FLASH_CONTROL
 
-#define DRV_NVM_MEDIA_SIZE              64
-#define DRV_NVM_MEDIA_START_ADDRESS     0x9D070000
+#define DRV_NVM_MEDIA_SIZE              256
+#define DRV_NVM_MEDIA_START_ADDRESS     0x9D000000
 
 #define DRV_NVM_ERASE_WRITE_ENABLE
 

@@ -24,7 +24,14 @@
 /* This section lists the other files that are included in this file.
  */
 #include "nvm_storage.h"
+#include "tcpip/tcpip.h"
+#include "tcpip/tcpip_manager.h"
+#include "tcpip/src/tcpip_manager_control.h"
+#include "system_config.h"
+#include "driver/nvm/drv_nvm.h"
 #include <stdlib.h>
+#include <stdint.h>
+
 /* TODO:  Include other files here if needed. */
 
 
@@ -56,11 +63,11 @@
     Any additional remarks
  */
 
-char controlsLabels[12][8];
-float ADCCoefs[4];
-int ADCOffsets[4];
-int ADCWarnings[4];
-    
+int networkInitDone;
+
+DRV_HANDLE nvmHandle;
+DRV_NVM_COMMAND_HANDLE nvmCommandHandle[8];
+
 /* ************************************************************************** */
 /* ************************************************************************** */
 // Section: Local Functions                                                   */
@@ -142,34 +149,123 @@ int ADCWarnings[4];
     Refer to the example_file.h interface header for function usage details.
  */
 
+void checkNVM(){
+    if(nvmData.nvmEmpty != 534){
+        setDefaults();
+    }
+    
+    nvmData.nvmEmpty = 534;
+}
+
+int factoryReset(){
+    if(PORTAbits.RA5 == 0){
+        setDefaults();
+        return 1;
+    }
+    
+    return 0;
+}
+
+
+void writeNVM(){
+    uint8_t nvmWriteBuffer [DRV_NVM_PAGE_SIZE * 3];
+    
+    memcpy(nvmWriteBuffer, &nvmData, sizeof(nvmData));
+            
+    DRV_NVM_EraseWrite(nvmHandle, &nvmCommandHandle[1], nvmWriteBuffer, 256, 12);            
+}
+
 void nvmRead(){
-    strcpy(controlsLabels[0], "Water 1\0");
-    strcpy(controlsLabels[1], "Water 2\0");
-    strcpy(controlsLabels[2], "Water 3\0");
-    strcpy(controlsLabels[3], "Water 4\0");
-    strcpy(controlsLabels[4], "Smoke 1\0");
-    strcpy(controlsLabels[5], "Smoke 2\0");
-    strcpy(controlsLabels[6], "Smoke 3\0");
-    strcpy(controlsLabels[7], "Smoke 4\0");
-    strcpy(controlsLabels[8], "Temp 1\0");
-    strcpy(controlsLabels[9], "Temp 2\0");
-    strcpy(controlsLabels[10], "Temp 3\0");
-    strcpy(controlsLabels[11], "Temp 4\0");
+    nvmHandle = DRV_NVM_Open(0, DRV_IO_INTENT_READWRITE);
     
-    ADCCoefs[0] = 0.1;
-    ADCCoefs[1] = 0.1;
-    ADCCoefs[2] = 0.1;
-    ADCCoefs[3] = 0.1;
+    uint8_t nvmReadBuffer [DRV_NVM_PAGE_SIZE * 3] __attribute__((aligned(16)));
     
-    ADCOffsets[0] = 30;
-    ADCOffsets[1] = 30;
-    ADCOffsets[2] = 30;
-    ADCOffsets[3] = 30;
+    if(factoryReset()){
+        return;
+    }
     
-    ADCWarnings[0] = 35;
-    ADCWarnings[1] = 35;
-    ADCWarnings[2] = 35;
-    ADCWarnings[3] = 35;
+    DRV_NVM_Read(nvmHandle, &nvmCommandHandle[0], nvmReadBuffer, (256*512), 6144);
+    memcpy(&nvmData, nvmReadBuffer, sizeof(nvmData));
+    
+    checkNVM();
+}
+
+void setDefaults(){
+    int i;
+    
+    strcpy(nvmData.controlsLabels[0], "Water 1\0");
+    strcpy(nvmData.controlsLabels[1], "Water 2\0");
+    strcpy(nvmData.controlsLabels[2], "Water 3\0");
+    strcpy(nvmData.controlsLabels[3], "Water 4\0");
+    strcpy(nvmData.controlsLabels[4], "Smoke 1\0");
+    strcpy(nvmData.controlsLabels[5], "Smoke 2\0");
+    strcpy(nvmData.controlsLabels[6], "Smoke 3\0");
+    strcpy(nvmData.controlsLabels[7], "Smoke 4\0");
+    strcpy(nvmData.controlsLabels[8], "Temp 1\0");
+    strcpy(nvmData.controlsLabels[9], "Temp 2\0");
+    strcpy(nvmData.controlsLabels[10], "Temp 3\0");
+    strcpy(nvmData.controlsLabels[11], "Temp 4\0");
+    
+    nvmData.ADCCoefs[0] = 0.1;
+    nvmData.ADCCoefs[1] = 0.1;
+    nvmData.ADCCoefs[2] = 0.1;
+    nvmData.ADCCoefs[3] = 0.1;
+    
+    nvmData.ADCOffsets[0] = 30;
+    nvmData.ADCOffsets[1] = 30;
+    nvmData.ADCOffsets[2] = 30;
+    nvmData.ADCOffsets[3] = 30;
+    
+    nvmData.ADCWarnings[0] = 35;
+    nvmData.ADCWarnings[1] = 35;
+    nvmData.ADCWarnings[2] = 35;
+    nvmData.ADCWarnings[3] = 35;
+    
+    nvmData.outs[0] = 1;
+    nvmData.outs[1] = 1;
+    nvmData.outs[2] = 1;
+    
+    strcpy(nvmData.login, "admin\0");
+    strcpy(nvmData.password, "mpimsp\0");
+    
+    strcpy(nvmData.smsNumbers[0], "\0");
+    strcpy(nvmData.smsNumbers[1], "\0");
+    strcpy(nvmData.smsNumbers[2], "\0");
+    
+    nvmData.gmtOffset = 3;
+    
+    char ipStrings[5][20];
+    
+    strcpy(ipStrings[0], "192.168.1.224");
+    strcpy(ipStrings[2], "255.255.255.0");
+    strcpy(ipStrings[1], "192.168.1.1");
+    strcpy(ipStrings[3], "192.168.1.1");
+    strcpy(ipStrings[4], "0.0.0.0");
+    nvmData.DHCP = 0;
+    
+    for(i=0; i<5; i++){
+        TCPIP_Helper_StringToIPAddress(ipStrings[i], &nvmData.IPs[i]);  
+    }
+}
+
+void setNetwork(){
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    if(networkInitDone == 1 || nvmData.DHCP){
+        networkInitDone = 1;
+        return;
+    }
+    
+    if(!TCPIP_STACK_NetIsReady(netH)){
+        return;
+    }
+
+    TCPIP_STACK_NetAddressSet(netH, &nvmData.IPs[0], &nvmData.IPs[2], true);
+    TCPIP_STACK_NetAddressGatewaySet(netH, &nvmData.IPs[1]);
+    TCPIP_STACK_NetAddressDnsPrimarySet(netH, &nvmData.IPs[3]);
+    TCPIP_STACK_NetAddressDnsSecondSet(netH, &nvmData.IPs[4]);
+    
+    networkInitDone = 1;
 }
 
 /* *****************************************************************************

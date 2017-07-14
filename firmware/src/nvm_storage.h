@@ -23,7 +23,11 @@
 /* Section: Included Files                                                    */
 /* ************************************************************************** */
 /* ************************************************************************** */
-
+#include "nvm_storage.h"
+#include "tcpip/tcpip.h"
+#include "tcpip/tcpip_manager.h"
+#include "tcpip/src/tcpip_manager_control.h"
+#include <stdlib.h>
 /* This section lists the other files that are included in this file.
  */
 
@@ -98,11 +102,30 @@ extern "C" {
         Describe enumeration elements and structure and union members above each 
         element or member.
      */
+    struct nvmStorage{ 
+        char controlsLabels[12][8];
+        float ADCCoefs[4];
+        int ADCOffsets[4];
+        int ADCWarnings[4];
 
-    char controlsLabels[12][8];
-    float ADCCoefs[4];
-    int ADCOffsets[4];
-    int ADCWarnings[4];
+        char login[21];
+        char password[21];
+    
+        char smsNumbers[3][14];
+        char smsNumbersShort[3][12];
+    
+        int gmtOffset;
+        
+        int outs[3];
+    
+        IPV4_ADDR IPs[5];   //IP, GWip, Mask, DNS1, DNS2 
+        int DHCP;
+
+        char logStrings[20][40];
+
+        int nvmEmpty;
+    } nvmData;
+
 
     // *****************************************************************************
     // *****************************************************************************
@@ -158,6 +181,10 @@ extern "C" {
             return 3;
         }
      */
+    void writeNVM();
+    void readNVM();
+    void setDefaults();
+    void setNetwork();
 
 
     /* Provide C++ Compatibility */

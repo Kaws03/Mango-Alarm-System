@@ -29,6 +29,7 @@
 #include "time.h"
 #include "sensors_read.h"
 #include "gsm.h"
+#include "nvm_storage.h"
 
 /* TODO:  Include other files here if needed. */
 
@@ -60,9 +61,8 @@
   @Remarks
     Any additional remarks
  */
-char* logStrings[20];
-char* timeString;
-int prevState[12];
+char timeString[26];
+int prevState[13];
 static const char default_format[] = "%a %b %d %Y";
 
 /* ************************************************************************** */
@@ -147,47 +147,63 @@ static const char default_format[] = "%a %b %d %Y";
  */
 int stateChanged()
 {
-    int curState[12];
+    int curState[13];
     int alert = -1;
     int i;
     
     for(i=0; i<4; i++){
-        curState[i] = getTempWarning(i);
+        curState[i] = getWater(i);
     }
     
     for(i=0; i<4; i++)
     {    
-        curState[i+4] = getWater(i);
+        curState[i+4] = getSmoke(i);
     }
     
     for(i=0; i<4; i++){
-        curState[i+8] = getSmoke(i);
+        curState[i+8] = getTempWarning(i);
     }
     
-    for(i=0; i<12; i++){
-        if(curState[i] != 0 && curState[i] != prevState[i])
+    curState[12] = getAC();   //AC
+    
+    for(i=0; i<13; i++){
+        if(curState[i] != 0 && curState[i] != 2 && curState[i] != prevState[i])
             alert = i;
     }
     
-    for(i=0; i<12; i++){
+    for(i=0; i<13; i++){
         prevState[i] = curState[i];
     }
     
     if(gsmFault == 1){
         gsmFault = 0;
-        alert = 12;
+        alert = 13;
     }
+    
     
     return alert;
 }
 
 void getTimeString(){
-    time_t rawTime = TCPIP_SNTP_UTCSecondsGet() + 10800;
+    time_t rawTime = TCPIP_SNTP_UTCSecondsGet() + (nvmData.gmtOffset * 3600);
     struct tm * timeInfo;
+    char* bufString = malloc(26);
+    int i;
 
     timeInfo = localtime (&rawTime);
     
-    timeString = asctime(timeInfo);;
+    strcpy(bufString, asctime(timeInfo));
+    
+    for(i=0; i<25; i++){
+        timeString[i] = bufString[i];
+        if(timeString[i] == '\0')
+            break;
+    }
+    
+    timeString[24] = ' ';
+    timeString[25] = '\0';
+    
+    free(bufString);
 }
 
 void initLog(){
@@ -195,91 +211,66 @@ void initLog(){
     
     stateChanged();
     for(i=0; i<20; i++){
-        logStrings[i] = malloc(1);
-        strcpy(logStrings[i], " ");
+        if(nvmData.logStrings[i][0] == '\0'){
+            strcpy(nvmData.logStrings[i], " "); 
+        }
     }
 }
 
-char* concat(const char *s1, const char *s2)
-{
-    char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
-    //in real code you would check for errors in malloc here
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
+void clearLog(){
+    int i;
+    for(i=0; i<20; i++){
+        strcpy(nvmData.logStrings[i], " ");
+    }
 }
 
 void getLog(){
-    char* eventString;
-    char eventChars[50];
-    int i;
+    char eventString[40];
+    int i, j;
     getTimeString();
     
-    switch(stateChanged())
-    {
-        case -1:
-            return;
-        case 0:
-            eventString = concat(timeString, " Temperature Sensor 1 Alert\0");
-            sendMessage();
-            break;
-        case 1:
-            eventString = concat(timeString, " Temperature Sensor 2 Alert\0");
-            sendMessage();
-            break;
-        case 2:
-            eventString = concat(timeString, " Temperature Sensor 3 Alert\0");
-            sendMessage();
-            break;
-        case 3:
-            eventString = concat(timeString, " Temperature Sensor 4 Alert\0");
-            sendMessage();
-            break;
-        case 4:
-            eventString = concat(timeString, " Water Leak Sensor 1 Alert\0");
-            sendMessage();
-            break;
-        case 5:
-            eventString = concat(timeString, " Water Leak Sensor 2 Alert\0");
-            sendMessage();
-            break;
-        case 6:
-            eventString = concat(timeString, " Water Leak Sensor 3 Alert\0");
-            sendMessage();
-            break;
-        case 7:
-            eventString = concat(timeString, " Water Leak Sensor 4 Alert\0");
-            sendMessage();
-            break;
-        case 8:
-            eventString = concat(timeString, " Smoke Sensor 1 Alert\0");
-            sendMessage();
-            break;
-        case 9:
-            eventString = concat(timeString, " Smoke Sensor 2 Alert\0");
-            sendMessage();
-            break;
-        case 10:
-            eventString = concat(timeString, " Smoke Sensor 3 Alert\0");
-            sendMessage();
-            break;
-        case 11:
-            eventString = concat(timeString, " Smoke Sensor 4 Alert\0");
-            sendMessage();
-            break;
-        case 12:
-            eventString = concat(timeString, " GSM Module error\0");
-            break;
+    int event = stateChanged();
+    
+    if(event == -1){
+        return;
     }
     
-    free(logStrings[19]);
-      
-    for(i = 19; i>0; i--){
-        logStrings[i] = logStrings[i-1];
+    for(j = 19; j>0; j--){
+        for(i=0; i<40; i++){
+            nvmData.logStrings[j][i] = nvmData.logStrings[j-1][i];
+        }
     }
     
-    logStrings[0] = eventString;
+    strcpy(eventString, timeString);
+    
+    if(event == 12){
+        strcpy(eventString+25, "AC loss\0");
+        
+    }
+    
+    else if(event == 13){
+        strcpy(eventString+25, "GSM error\0");
+    }
+    
+    else {
+    
+        strcpy((char *)eventString+25, nvmData.controlsLabels[event]);
+        for(i=25; i<32; i++){
+            if(eventString[i] == '\0')
+                break;
+        }
+        strcpy((char *)eventString+i, " Alert\0");
+    }
+    
+    for(i=0; i<40; i++){
+        nvmData.logStrings[0][i] = eventString[i];
+    }
+    
+    if(event!= 13) {
+        sendMessage();
+    }
 
+    writeNVM();
 }
 
 

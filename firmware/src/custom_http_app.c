@@ -45,6 +45,8 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 #include "nvm_storage.h"
 
 #include "tcpip/tcpip.h"
+#include "tcpip/tcpip_manager.h"
+#include "tcpip/src/tcpip_manager_control.h"
 #include "system/tmr/sys_tmr.h"
 #include "system/random/sys_random.h"
 #include "tcpip/src/common/helpers.h"
@@ -101,6 +103,7 @@ SUBSTITUTE GOODS, TECHNOLOGY, SERVICES, OR ANY CLAIMS BY THIRD PARTIES
 static uint8_t s_buf_ipv4addr[HTTP_APP_IPV4_ADDRESS_BUFFER_SIZE];
 int successFlag = 0;
 uint32_t successTime;
+char newIP[20];
 
 extern const char * const ddnsServiceHosts[];
 // RAM allocated for DDNS parameters
@@ -179,8 +182,8 @@ uint8_t TCPIP_HTTP_FileAuthenticate(HTTP_CONN_HANDLE connHandle, uint8_t *cFile)
 #if defined(TCPIP_HTTP_USE_AUTHENTICATION)
 uint8_t TCPIP_HTTP_UserAuthenticate(HTTP_CONN_HANDLE connHandle, uint8_t *cUser, uint8_t *cPass)
 {
-    if(strcmp((char *)cUser,(const char *)"admin") == 0
-        && strcmp((char *)cPass, (const char *)"microchip") == 0)
+    if(strcmp((char *)cUser,(const char *)nvmData.login) == 0
+        && strcmp((char *)cPass, (const char *)nvmData.password) == 0)
         return 0x80; // We accept this combination
 
     // You can add additional user/pass combos here.
@@ -268,6 +271,8 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
                     setPLC(0);
                 break;
         }
+        
+        writeNVM();
     }
     
     else if(!memcmp(filename, "digLabels1.cgi", 14))
@@ -276,45 +281,46 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
         // Determine which LED to toggle.
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab1");
         for(i=0; i<7; i++){
-            controlsLabels[0][i] = *ptr;
+            nvmData.controlsLabels[0][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[0][7] = '\0';
+        nvmData.controlsLabels[0][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab2");
         for(i=0; i<7; i++){
-            controlsLabels[1][i] = *ptr;
+            nvmData.controlsLabels[1][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[1][7] = '\0';
+        nvmData.controlsLabels[1][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab3");
         for(i=0; i<7; i++){
-            controlsLabels[2][i] = *ptr;
+            nvmData.controlsLabels[2][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[2][7] = '\0';
+        nvmData.controlsLabels[2][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab4");
         for(i=0; i<7; i++){
-            controlsLabels[3][i] = *ptr;
+            nvmData.controlsLabels[3][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[3][7] = '\0';
+        nvmData.controlsLabels[3][7] = '\0';
         
         setSuccess(1);
+        writeNVM();
     }
     
     else if(!memcmp(filename, "digLabels2.cgi", 14))
@@ -323,45 +329,46 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
         // Determine which LED to toggle.
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab5");
         for(i=0; i<7; i++){
-            controlsLabels[4][i] = *ptr;
+            nvmData.controlsLabels[4][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[4][7] = '\0';
+        nvmData.controlsLabels[4][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab6");
         for(i=0; i<7; i++){
-            controlsLabels[5][i] = *ptr;
+            nvmData.controlsLabels[5][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[5][7] = '\0';
+        nvmData.controlsLabels[5][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab7");
         for(i=0; i<7; i++){
-            controlsLabels[6][i] = *ptr;
+            nvmData.controlsLabels[6][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[6][7] = '\0';
+        nvmData.controlsLabels[6][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab8");
         for(i=0; i<7; i++){
-            controlsLabels[7][i] = *ptr;
+            nvmData.controlsLabels[7][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[7][7] = '\0';
+        nvmData.controlsLabels[7][7] = '\0';
         
         setSuccess(2);
+        writeNVM();
     }
     
     else if(!memcmp(filename, "anLabels.cgi", 12))
@@ -370,45 +377,46 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
         // Determine which LED to toggle.
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab9");
         for(i=0; i<7; i++){
-            controlsLabels[8][i] = *ptr;
+            nvmData.controlsLabels[8][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[8][7] = '\0';
+        nvmData.controlsLabels[8][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab10");
         for(i=0; i<7; i++){
-            controlsLabels[9][i] = *ptr;
+            nvmData.controlsLabels[9][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[9][7] = '\0';
+        nvmData.controlsLabels[9][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab11");
         for(i=0; i<7; i++){
-            controlsLabels[10][i] = *ptr;
+            nvmData.controlsLabels[10][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[10][7] = '\0';
+        nvmData.controlsLabels[10][7] = '\0';
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"lab12");
         for(i=0; i<7; i++){
-            controlsLabels[11][i] = *ptr;
+            nvmData.controlsLabels[11][i] = *ptr;
             if(*ptr == '\0'){
                 break;
             }
             ptr++;
         }
-        controlsLabels[11][7] = '\0';
+        nvmData.controlsLabels[11][7] = '\0';
         
         setSuccess(3);
+        writeNVM();
     }
     
     else if(!memcmp(filename, "anCoefs.cgi", 11))
@@ -425,7 +433,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[0][9] = '\0';
-        ADCCoefs[0] = atof(bufStrs[0]);
+        nvmData.ADCCoefs[0] = atof(bufStrs[0]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val2");
         for(i=0; i<9; i++){
@@ -436,7 +444,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[1][9] = '\0';
-        ADCCoefs[1] = atof(bufStrs[1]);
+        nvmData.ADCCoefs[1] = atof(bufStrs[1]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val3");
         for(i=0; i<9; i++){
@@ -447,7 +455,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[2][9] = '\0';
-        ADCCoefs[2] = atof(bufStrs[2]);
+        nvmData.ADCCoefs[2] = atof(bufStrs[2]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val4");
         for(i=0; i<9; i++){
@@ -458,10 +466,11 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[3][9] = '\0';
-        ADCCoefs[3] = atof(bufStrs[3]);
+        nvmData.ADCCoefs[3] = atof(bufStrs[3]);
         
         
         setSuccess(4);
+        writeNVM();
     }
     
     else if(!memcmp(filename, "anOffsets.cgi", 13))
@@ -478,7 +487,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[0][9] = '\0';
-        ADCOffsets[0] = atoi(bufStrs[0]);
+        nvmData.ADCOffsets[0] = atoi(bufStrs[0]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val2");
         for(i=0; i<9; i++){
@@ -489,7 +498,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[1][9] = '\0';
-        ADCOffsets[1] = atoi(bufStrs[1]);
+        nvmData.ADCOffsets[1] = atoi(bufStrs[1]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val3");
         for(i=0; i<9; i++){
@@ -500,7 +509,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[2][9] = '\0';
-        ADCOffsets[2] = atoi(bufStrs[2]);
+        nvmData.ADCOffsets[2] = atoi(bufStrs[2]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val4");
         for(i=0; i<9; i++){
@@ -511,10 +520,11 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[3][9] = '\0';
-        ADCOffsets[3] = atoi(bufStrs[3]);
+        nvmData.ADCOffsets[3] = atoi(bufStrs[3]);
         
         
         setSuccess(5);
+        writeNVM();
     }
     
     else if(!memcmp(filename, "anWarns.cgi", 11))
@@ -531,7 +541,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[0][9] = '\0';
-        ADCWarnings[0] = atoi(bufStrs[0]);
+        nvmData.ADCWarnings[0] = atoi(bufStrs[0]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val2");
         for(i=0; i<9; i++){
@@ -542,7 +552,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[1][9] = '\0';
-        ADCWarnings[1] = atoi(bufStrs[1]);
+        nvmData.ADCWarnings[1] = atoi(bufStrs[1]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val3");
         for(i=0; i<9; i++){
@@ -553,7 +563,7 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[2][9] = '\0';
-        ADCWarnings[2] = atoi(bufStrs[2]);
+        nvmData.ADCWarnings[2] = atoi(bufStrs[2]);
         
         ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"val4");
         for(i=0; i<9; i++){
@@ -564,12 +574,247 @@ HTTP_IO_RESULT TCPIP_HTTP_GetExecute(HTTP_CONN_HANDLE connHandle)
             ptr++;
         }
         bufStrs[3][9] = '\0';
-        ADCWarnings[3] = atoi(bufStrs[3]);
+        nvmData.ADCWarnings[3] = atoi(bufStrs[3]);
         
         
         setSuccess(6);
+        writeNVM();
     }
     
+    else if(!memcmp(filename, "pass.cgi", 8))
+    {
+        char bufStrs[4][21];
+        int i;
+        // Determine which LED to toggle.
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"pas");
+        for(i=0; i<21; i++){
+            bufStrs[0][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[0][21] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"log");
+        for(i=0; i<21; i++){
+            bufStrs[1][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[1][21] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"npas");
+        for(i=0; i<21; i++){
+            bufStrs[2][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[2][21] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"rpas");
+        for(i=0; i<21; i++){
+            bufStrs[3][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[3][21] = '\0';
+        
+        if((strcmp(nvmData.password, bufStrs[0]) == 0) && (strcmp(bufStrs[2], bufStrs[3]) == 0)) {
+            strcpy(nvmData.password, bufStrs[2]);
+            strcpy(nvmData.login, bufStrs[1]);
+            
+            setSuccess(7);
+            writeNVM();
+        }
+    }
+    
+    else if(!memcmp(filename, "sms.cgi", 7))
+    {
+        char bufStrs[3][14];
+        int i, j;
+        // Determine which LED to toggle.
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"num1");
+        for(i=0; i<13; i++){
+            bufStrs[0][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        
+        if(i>3){
+            bufStrs[0][0] = '+';
+        }
+        
+        bufStrs[0][13] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"num2");
+        for(i=0; i<13; i++){
+            bufStrs[1][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        if(i>3){
+            bufStrs[1][0] = '+';
+        }
+        
+        bufStrs[1][13] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"num3");
+        for(i=0; i<13; i++){
+            bufStrs[2][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        
+        if(i>3){
+            bufStrs[2][0] = '+';
+        }
+        
+        bufStrs[2][13] = '\0';
+        
+        strcpy(nvmData.smsNumbers[0], bufStrs[0]);
+        strcpy(nvmData.smsNumbers[1], bufStrs[1]);
+        strcpy(nvmData.smsNumbers[2], bufStrs[2]);
+        
+        
+        for(j = 0; j<3; j++){
+            if(nvmData.smsNumbers[j][0] == '\0'){
+                nvmData.smsNumbersShort[j][0] = '\0';
+                continue;
+            }
+            for(i=0; i<12; i++){
+                nvmData.smsNumbersShort[j][i] = nvmData.smsNumbers[j][i+2];
+            }
+        }
+        
+        setSuccess(8);
+        writeNVM();
+    }
+    
+    else if(!memcmp(filename, "network.cgi", 11))
+    {
+        int i;
+        char bufStrs[6][20];
+        
+        IPV4_ADDR addr[5];
+        
+        TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"ip");
+        for(i=0; i<20; i++){
+            bufStrs[0][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[0][20] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"sn");
+        for(i=0; i<20; i++){
+            bufStrs[1][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[1][20] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"gw");
+        for(i=0; i<20; i++){
+            bufStrs[2][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[2][20] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"d1");
+        for(i=0; i<20; i++){
+            bufStrs[3][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[3][20] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"d2");
+        for(i=0; i<20; i++){
+            bufStrs[4][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[4][20] = '\0';
+        
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"dh");
+        for(i=0; i<20; i++){
+            bufStrs[5][i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStrs[5][20] = '\0';
+        
+        for(i=0; i<5; i++){
+            if(!TCPIP_Helper_StringToIPAddress((char *)bufStrs[i], &addr[i]))
+            {
+                return HTTP_IO_DONE;
+            }
+        }
+        
+        setSuccess(9);
+        writeNVM();
+        
+        
+        TCPIP_STACK_NetAddressSet(netH, &addr[1], &addr[2], true);
+        TCPIP_STACK_NetAddressGatewaySet(netH, &addr[3]);
+        TCPIP_STACK_NetAddressDnsPrimarySet(netH, &addr[4]);
+        TCPIP_STACK_NetAddressDnsSecondSet(netH, &addr[5]);  
+    }
+    
+    else if(!memcmp(filename, "log.cgi", 7))
+    {
+        int i;
+        char bufStr[4];
+        // Determine which LED to toggle.
+        ptr = TCPIP_HTTP_ArgGet(httpDataBuff, (const uint8_t *)"par");
+        for(i=0; i<4; i++){
+            bufStr[i] = *ptr;
+            if(*ptr == '\0'){
+                break;
+            }
+            ptr++;
+        }
+        bufStr[4] = '\0';
+        
+        if(strcmp(bufStr, "cl") == 0){
+            clearLog();
+        }
+        else{
+            nvmData.gmtOffset = atoi(bufStr);
+        }
+        
+        
+        setSuccess(10);
+        writeNVM();
+    }
 
     return HTTP_IO_DONE;
 }
@@ -611,8 +856,9 @@ HTTP_IO_RESULT TCPIP_HTTP_PostExecute(HTTP_CONN_HANDLE connHandle)
 #endif
 
 #if defined(HTTP_APP_USE_RECONFIG)
-    if(!memcmp(filename, "protect/config.htm", 18))
+    if(!memcmp(filename, "network.cgi", 11))
         return HTTPPostConfig(connHandle);
+    
     #if defined(TCPIP_STACK_USE_SNMP_SERVER)
     else if(!memcmp(filename, "snmp/snmpconfig.htm", 19))
         return HTTPPostSNMPCommunity(connHandle);
@@ -846,6 +1092,8 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
                 break;
             }
             strncpy(httpNetData.ipAddr, (char *)httpDataBuff + 6, sizeof(httpNetData.ipAddr));
+            nvmData.IPs[0] = newIPAddress;
+            strcpy(newIP, httpDataBuff+6);
         }
         else if(!strcmp((char *)httpDataBuff, (const char *)"gw"))
         {   // Read new gateway address
@@ -855,6 +1103,7 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
                 break;
             }
             strncpy(httpNetData.gwIP, (char *)httpDataBuff + 6, sizeof(httpNetData.gwIP));
+            nvmData.IPs[1] = newIPAddress;
         }
         else if(!strcmp((char *)httpDataBuff, (const char *)"sub"))
         {   // Read new static subnet
@@ -864,6 +1113,7 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
                 break;
             }
             strncpy(httpNetData.ipMask, (char *)httpDataBuff + 6, sizeof(httpNetData.ipMask));
+            nvmData.IPs[2] = newMask;
         }
         else if(!strcmp((char *)httpDataBuff, (const char *)"dns1"))
         {   // Read new primary DNS server
@@ -873,6 +1123,7 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
                 break;
             }
             strncpy(httpNetData.dns1IP, (char *)httpDataBuff + 6, sizeof(httpNetData.dns1IP));
+            nvmData.IPs[3] = newIPAddress;
         }
         else if(!strcmp((char *)httpDataBuff, (const char *)"dns2"))
         {   // Read new secondary DNS server
@@ -882,6 +1133,7 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
                 break;
             }
             strncpy(httpNetData.dns2IP, (char *)httpDataBuff + 6, sizeof(httpNetData.dns2IP));
+            nvmData.IPs[4] = newIPAddress;
         }
         else if(!strcmp((char *)httpDataBuff, (const char *)"mac"))
         {   // read the new MAC address
@@ -899,14 +1151,22 @@ static HTTP_IO_RESULT HTTPPostConfig(HTTP_CONN_HANDLE connHandle)
         else if(!strcmp((char *)httpDataBuff, (const char *)"dhcp"))
         {   // Read new DHCP Enabled flag
             httpNetData.netConfig.startFlags = httpDataBuff[6] == '1' ? TCPIP_NETWORK_CONFIG_DHCP_CLIENT_ON : 0;
+            if(httpDataBuff[6] == '1'){
+                nvmData.DHCP = 1;
+            }
+            else{
+                nvmData.DHCP = 0;
+            }
         }
     }
 
     if(bConfigFailure == false)
-    {
+    {   
+        writeNVM();
+        
         // All parsing complete!  Save new settings and force an interface restart
         // Set the interface to restart and display reconnecting information
-        strcpy((char *)httpDataBuff, "/protect/reboot.htm?");
+        strcpy((char *)httpDataBuff, "protect/reboot.htm?");
         TCPIP_Helper_FormatNetBIOSName((uint8_t *)httpNetData.nbnsName);
         memcpy((void *)(httpDataBuff+20), httpNetData.nbnsName, 16);
         httpDataBuff[20+16] = 0x00; // Force null termination
@@ -1966,7 +2226,7 @@ void TCPIP_HTTP_Print_reboot(HTTP_CONN_HANDLE connHandle)
 
 void TCPIP_HTTP_Print_rebootaddr(HTTP_CONN_HANDLE connHandle)
 {   // This is the expected address of the board upon rebooting
-    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), TCPIP_HTTP_CurrentConnectionDataBufferGet(connHandle));
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), newIP);
 }
 
 void TCPIP_HTTP_Print_ddns_user(HTTP_CONN_HANDLE connHandle)
@@ -2145,11 +2405,18 @@ void TCPIP_HTTP_Print_led0(HTTP_CONN_HANDLE connHandle)     //ledAlarmStatus
 }
 void TCPIP_HTTP_Print_led1(HTTP_CONN_HANDLE connHandle)     //ledAC
 {
-    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "off");
+    if(getAC() == 1)
+    {
+        TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
+    }
+    else
+    {
+        TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "off");
+    }
 }
 void TCPIP_HTTP_Print_led2(HTTP_CONN_HANDLE connHandle)     //ledTemp1
 {
-    if(getTempWarning(0) == 1)
+    if(getTempWarning(0) != 0)
     {
         TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
     }
@@ -2160,7 +2427,7 @@ void TCPIP_HTTP_Print_led2(HTTP_CONN_HANDLE connHandle)     //ledTemp1
 }
 void TCPIP_HTTP_Print_led3(HTTP_CONN_HANDLE connHandle)     //ledTemp2
 {
-    if(getTempWarning(1) == 1)
+    if(getTempWarning(1) != 0)
     {
         TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
     }
@@ -2171,7 +2438,7 @@ void TCPIP_HTTP_Print_led3(HTTP_CONN_HANDLE connHandle)     //ledTemp2
 }
 void TCPIP_HTTP_Print_led4(HTTP_CONN_HANDLE connHandle)     //ledTemp3
 {
-    if(getTempWarning(2) == 1)
+    if(getTempWarning(2) != 0)
     {
         TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
     }
@@ -2182,7 +2449,7 @@ void TCPIP_HTTP_Print_led4(HTTP_CONN_HANDLE connHandle)     //ledTemp3
 }
 void TCPIP_HTTP_Print_led5(HTTP_CONN_HANDLE connHandle)     //ledTemp4
 {
-    if(getTempWarning(3) == 1)
+    if(getTempWarning(3) != 0)
     {
         TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
     }
@@ -2362,19 +2629,19 @@ void TCPIP_HTTP_Print_pot3(HTTP_CONN_HANDLE connHandle)     //Temp4
 
 void TCPIP_HTTP_Print_string(HTTP_CONN_HANDLE connHandle, uint16_t num)       //EventLog1
 {
-    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), logStrings[num]);
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), nvmData.logStrings[num]);
 }
 
 void TCPIP_HTTP_Print_label(HTTP_CONN_HANDLE connHandle, uint16_t num)       //EventLog1
 {
-    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), (const uint8_t *)controlsLabels[num]);
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), (const uint8_t *)nvmData.controlsLabels[num]);
 }
 
 void TCPIP_HTTP_Print_coef(HTTP_CONN_HANDLE connHandle, uint16_t num)       //EventLog1
 {
     uint8_t CoefString[8];
 
-    snprintf ((uint8_t *)CoefString, sizeof(CoefString), "%f", ADCCoefs[num]);
+    snprintf ((uint8_t *)CoefString, sizeof(CoefString), "%f", nvmData.ADCCoefs[num]);
 
     TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), CoefString);
 }
@@ -2383,7 +2650,7 @@ void TCPIP_HTTP_Print_offs(HTTP_CONN_HANDLE connHandle, uint16_t num)       //Ev
 {
     uint8_t OffsString[8];
 
-    itoa((uint8_t *)OffsString, ADCOffsets[num], 10);
+    itoa((uint8_t *)OffsString, nvmData.ADCOffsets[num], 10);
 
     TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), OffsString);
 }
@@ -2392,7 +2659,7 @@ void TCPIP_HTTP_Print_warn(HTTP_CONN_HANDLE connHandle, uint16_t num)       //Ev
 {
     uint8_t WarnString[8];
 
-    itoa((uint8_t *)WarnString, ADCWarnings[num], 10);
+    itoa((uint8_t *)WarnString, nvmData.ADCWarnings[num], 10);
 
     TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), WarnString);
 }
@@ -2404,6 +2671,104 @@ void TCPIP_HTTP_Print_successFlag(HTTP_CONN_HANDLE connHandle, uint16_t num)    
     uitoa(getSuccess(), (uint8_t *)SuccessString);
 
     TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), SuccessString);
+}
+
+void TCPIP_HTTP_Print_sms(HTTP_CONN_HANDLE connHandle, uint16_t num)       //EventLog1
+{
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), nvmData.smsNumbers[num]);
+}
+
+void TCPIP_HTTP_Print_gmt(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    uint8_t gmtString[8];
+
+    itoa((uint8_t *)gmtString, nvmData.gmtOffset, 10);
+
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), gmtString);
+}
+
+void TCPIP_HTTP_Print_ipAddr(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    char addrString[15];
+    IPV4_ADDR addr;
+    addr.Val = TCPIP_STACK_NetAddress(netH);
+    
+    TCPIP_Helper_IPAddressToString(&addr, (char *)addrString, 15);
+    
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), addrString);
+}
+
+void TCPIP_HTTP_Print_subNet(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    char addrString[15];
+    IPV4_ADDR addr;
+    addr.Val = TCPIP_STACK_NetMask(netH);
+    
+    TCPIP_Helper_IPAddressToString(&addr, (char *)addrString, 15);
+    
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), addrString);
+}
+
+void TCPIP_HTTP_Print_getaway(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    char addrString[15];
+    IPV4_ADDR addr;
+    addr.Val = TCPIP_STACK_NetAddressGateway(netH);
+    
+    TCPIP_Helper_IPAddressToString(&addr, (char *)addrString, 15);
+    
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), addrString);
+}
+
+void TCPIP_HTTP_Print_dns1(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    char addrString[15];
+    IPV4_ADDR addr;
+    addr.Val = TCPIP_STACK_NetAddressDnsPrimary(netH);
+    
+    TCPIP_Helper_IPAddressToString(&addr, (char *)addrString, 15);
+    
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), addrString);
+}
+
+void TCPIP_HTTP_Print_dns2(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCPIP_NET_HANDLE netH = TCPIP_STACK_IndexToNet(0);
+    
+    char addrString[15];
+    IPV4_ADDR addr;
+    addr.Val = TCPIP_STACK_NetAddressDnsSecond(netH);
+    
+    TCPIP_Helper_IPAddressToString(&addr, (char *)addrString, 15);
+    
+    TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), addrString);
+}
+
+void TCPIP_HTTP_Print_dhcp(HTTP_CONN_HANDLE connHandle)       //EventLog1
+{
+    TCP_SOCKET sktHTTP = TCPIP_HTTP_CurrentConnectionSocketGet(connHandle);
+    
+    if(nvmData.DHCP == 0){
+        TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "off");
+        return;
+    }
+
+    if(TCPIP_DHCP_IsEnabled(TCPIP_TCP_SocketNetGet(sktHTTP)))
+    {
+        TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "on");
+    }
+    else{
+        TCPIP_TCP_StringPut(TCPIP_HTTP_CurrentConnectionSocketGet(connHandle), "off");
+    }
+    
 }
 
 void TCPIP_HTTP_Print_btn(HTTP_CONN_HANDLE connHandle, uint16_t num)
@@ -2437,6 +2802,26 @@ void TCPIP_HTTP_Print_var5(HTTP_CONN_HANDLE connHandle)
 }
 
 void TCPIP_HTTP_Print_var6(HTTP_CONN_HANDLE connHandle)
+{
+    
+}
+
+void TCPIP_HTTP_Print_var7(HTTP_CONN_HANDLE connHandle)
+{
+    
+}
+
+void TCPIP_HTTP_Print_var8(HTTP_CONN_HANDLE connHandle)
+{
+    
+}
+
+void TCPIP_HTTP_Print_var9(HTTP_CONN_HANDLE connHandle)
+{
+    
+}
+
+void TCPIP_HTTP_Print_var10(HTTP_CONN_HANDLE connHandle)
 {
     
 }

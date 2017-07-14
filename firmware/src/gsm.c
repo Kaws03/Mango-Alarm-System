@@ -28,6 +28,7 @@
 #include "event_log.h"
 #include "power_control.h"
 #include "driver/tmr/drv_tmr.h"
+#include "nvm_storage.h"
 
 /* TODO:  Include other files here if needed. */
 
@@ -152,6 +153,8 @@ int gsmFault = 0;
 int callDd = -1;
 
 int serviceState = 0;
+int curNumber = 0;
+int numbersCount = 0;
 
 uint32_t timeOutVal = 1250000;
 
@@ -213,17 +216,38 @@ void initGSM()
     PLIB_TMR_Period32BitSet(TMR_ID_1, 0xFFFFFFFF);
     PLIB_TMR_Stop(TMR_ID_2);
 }
+
+void txFaultLog(){
+    gsmFault = 1;
+}
+
 void sendMessage()
 {
     if(getAlarm() == 0 || serviceState != 0){
         return;
     }
     serviceState = 1;
+    curNumber = 0;
+    
+    if(nvmData.smsNumbersShort[0][0] == '\0'){
+        serviceState = 0;
+        txFaultLog();
+        return;
+    }
+    
+    else if(nvmData.smsNumbersShort[1][0] == '\0'){
+        numbersCount = 1;
+    }
+    
+    else if(nvmData.smsNumbersShort[2][0] == '\0'){
+        numbersCount = 2;
+    }
+    
+    else {
+        numbersCount = 3;
+    }
+    
     txAttempts = 0;
-}
-void call()
-{
-
 }
 
 void txRetry(){
@@ -232,12 +256,9 @@ void txRetry(){
     clearRx();
 }
 
-void txFaultLog(){
-    gsmFault = 1;
-}
-
 void gsmService(){
     getString();
+    
     switch(serviceState){
         case 0:
             return;
@@ -262,7 +283,9 @@ void gsmService(){
             }
             return;
         case 3:
-            printf("AT+CMGS=\"80979298777\"\n");
+            printf("AT+CMGS=\"");
+            printf(nvmData.smsNumbersShort[curNumber]);
+            printf("\"\n");
             timerStart();
             serviceState++;
         case 4:
@@ -276,7 +299,7 @@ void gsmService(){
             }
             return;
         case 5:
-            printf(logStrings[0]);
+            printf(nvmData.logStrings[0]);
             printf("\032\n");
             timerStart();
             serviceState++;
@@ -287,6 +310,10 @@ void gsmService(){
             else{
                if(rxBytes[0] == 'O' && rxBytes[1] == 'K'){
                    serviceState = 0;
+                   if(curNumber < (numbersCount-1)){
+                       curNumber ++;
+                       serviceState = 1;
+                   }
                    clearRx();
                } 
             }

@@ -138,18 +138,34 @@
   @Remarks
     Refer to the example_file.h interface header for function usage details.
  */
+int tempFlags[4];
+int ACFlag;
+
 int readTemp(int sensor)
 {
     int ADCVal = readAdcChannel(sensor + 3);
-    float tempFl = ADCVal * ADCCoefs[sensor];
-    tempFl += ADCOffsets[sensor];
+    float tempFl = (float)ADCVal;
+    tempFl *= nvmData.ADCCoefs[sensor];
+    tempFl += (float)nvmData.ADCOffsets[sensor];
     return (int)tempFl;
 }
 
 int getTempWarning(int sensor)
 {
-    if(readTemp(sensor) > ADCWarnings[sensor])
+    int temp = readTemp(sensor);
+    
+    if(tempFlags[sensor] == 1){
+        if((float)temp < (float)nvmData.ADCWarnings[sensor] * 0.9){
+            tempFlags[sensor] = 0;
+            return 0;
+        }
+        return 2;
+    }
+    
+    if(temp > nvmData.ADCWarnings[sensor])
     {
+        
+        tempFlags[sensor] = 1;
         return 1;
     }
     else
@@ -169,12 +185,34 @@ int getWater(int sensor)
     return getBtn(sensor + 4);
 }
 
+
+int getAC(){
+    int ACVal = readAdcChannel(7);
+    
+    if(ACFlag == 1){
+        if((float)ACVal > 140){
+            ACFlag = 0;
+            return 0;
+        }
+        return 2;
+    }
+    
+    if(ACVal <= 124){
+        ACFlag = 1;
+        return 1;
+    }
+    
+    else{
+        return 0;
+    }
+}
+
 int getAlert(){
     int alert = 0;
     int i;
     
     for(i=0; i<4; i++){
-        alert = getTempWarning(i+3);
+        alert = getTempWarning(i);
         if(alert == 1)
             return 1;
     }
@@ -192,10 +230,12 @@ int getAlert(){
             return 1;
     }
     
+    if(getAC() != 0){
+        return 1;
+    }
+    
     return 0;
 }
-
-
 
 /* *****************************************************************************
  End of File

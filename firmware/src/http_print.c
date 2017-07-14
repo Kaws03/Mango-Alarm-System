@@ -42,6 +42,8 @@
 
 void TCPIP_HTTP_Print(HTTP_CONN_HANDLE connHandle,uint32_t callbackID);
 void TCPIP_HTTP_Print_btn(HTTP_CONN_HANDLE connHandle,uint16_t);
+void TCPIP_HTTP_Print_reboot(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_rebootaddr(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_led0(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_led1(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_led2(HTTP_CONN_HANDLE connHandle);
@@ -76,6 +78,18 @@ void TCPIP_HTTP_Print_var1(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_var2(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_var3(HTTP_CONN_HANDLE connHandle);
 void TCPIP_HTTP_Print_var4(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_sms(HTTP_CONN_HANDLE connHandle,uint16_t);
+void TCPIP_HTTP_Print_gmt(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_dhcp(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_ipAddr(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_subNet(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_getaway(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_dns1(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_dns2(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_var10(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_var9(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_var7(HTTP_CONN_HANDLE connHandle);
+void TCPIP_HTTP_Print_var8(HTTP_CONN_HANDLE connHandle);
 
 void TCPIP_HTTP_Print(HTTP_CONN_HANDLE connHandle,uint32_t callbackID)
 {
@@ -84,6 +98,12 @@ void TCPIP_HTTP_Print(HTTP_CONN_HANDLE connHandle,uint32_t callbackID)
     {
         case 0x0000000f:
 			TCPIP_HTTP_Print_btn(connHandle,0);
+			break;
+        case 0x00000024:
+			TCPIP_HTTP_Print_reboot(connHandle);
+			break;
+        case 0x00000025:
+			TCPIP_HTTP_Print_rebootaddr(connHandle);
 			break;
         case 0x00000060:
 			TCPIP_HTTP_Print_led0(connHandle);
@@ -303,6 +323,48 @@ void TCPIP_HTTP_Print(HTTP_CONN_HANDLE connHandle,uint32_t callbackID)
 			break;
         case 0x000000e4:
 			TCPIP_HTTP_Print_var4(connHandle);
+			break;
+        case 0x000000e5:
+			TCPIP_HTTP_Print_sms(connHandle,0);
+			break;
+        case 0x000000e6:
+			TCPIP_HTTP_Print_gmt(connHandle);
+			break;
+        case 0x000000e7:
+			TCPIP_HTTP_Print_sms(connHandle,1);
+			break;
+        case 0x000000e8:
+			TCPIP_HTTP_Print_sms(connHandle,2);
+			break;
+        case 0x000000e9:
+			TCPIP_HTTP_Print_dhcp(connHandle);
+			break;
+        case 0x000000ea:
+			TCPIP_HTTP_Print_ipAddr(connHandle);
+			break;
+        case 0x000000eb:
+			TCPIP_HTTP_Print_subNet(connHandle);
+			break;
+        case 0x000000ec:
+			TCPIP_HTTP_Print_getaway(connHandle);
+			break;
+        case 0x000000ed:
+			TCPIP_HTTP_Print_dns1(connHandle);
+			break;
+        case 0x000000ee:
+			TCPIP_HTTP_Print_dns2(connHandle);
+			break;
+        case 0x000000ef:
+			TCPIP_HTTP_Print_var10(connHandle);
+			break;
+        case 0x000000f0:
+			TCPIP_HTTP_Print_var9(connHandle);
+			break;
+        case 0x000000f1:
+			TCPIP_HTTP_Print_var7(connHandle);
+			break;
+        case 0x000000f2:
+			TCPIP_HTTP_Print_var8(connHandle);
 			break;
         default:
             // Output notification for undefined values

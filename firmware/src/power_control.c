@@ -26,6 +26,7 @@
 #include "power_control.h"
 #include "sensors_read.h"
 #include "board_io.h"
+#include "nvm_storage.h"
 /* TODO:  Include other files here if needed. */
 
 
@@ -142,15 +143,16 @@ int PLCState = 1;
  */
 void initPower()
 {
-    setPump(0, 1);
-    setPump(1, 1);
+    setPump(0, nvmData.outs[0]);
+    setPump(1, nvmData.outs[1]);
     setAlarm(1);
-    setPLC(1);
+    setPLC(nvmData.outs[2]);
 }
 void setPump(int pump, int state)
 {
     pumpStates[pump] = state;
     setLed(pump+2, state);
+    nvmData.outs[pump] = state;
 }
 
 int getPump(int pump)
@@ -173,6 +175,7 @@ void setPLC(int state)
 {
     PLCState = state;
     setLed(1, state);
+    nvmData.outs[2] = state;
 }
 
 int getPLC()

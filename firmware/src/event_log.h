@@ -157,9 +157,9 @@ extern "C" {
             return 3;
         }
      */
-    char* logStrings[20];
     
     void initLog();
+    void clearLog();
     void getLog();
 
 

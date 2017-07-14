@@ -160,6 +160,7 @@ extern "C" {
     int getTempWarning(int sensor);
     int getSmoke(int sensor);
     int getWater(int sensor);
+    int getAC();
 
     /* Provide C++ Compatibility */
 #ifdef __cplusplus

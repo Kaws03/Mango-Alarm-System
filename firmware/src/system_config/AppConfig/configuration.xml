@@ -1232,7 +1232,7 @@
       <Template>
         <Name>system_init.c</Name>
         <Path>Source Files/app/system_config/AppConfig</Path>
-        <Checksum>0315C2DF78017426388FAE076329D083</Checksum>
+        <Checksum>981E8458377B8D440CFFBE8EB5C952B7</Checksum>
       </Template>
       <Template>
         <Name>drv_usart_static_local.h</Name>
@@ -1266,7 +1266,7 @@
       <Template>
         <Name>system_config.h</Name>
         <Path>Header Files/app/system_config/AppConfig</Path>
-        <Checksum>C82D80839A5D6BF218E765FC74E0E0AA</Checksum>
+        <Checksum>C22AF4E6D44D327D00E823D910BB1A35</Checksum>
       </Template>
       <Template>
         <Name>drv_usart_mapping.c</Name>

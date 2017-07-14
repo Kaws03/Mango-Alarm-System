@@ -163,6 +163,18 @@ void initIO()
     TRISGbits.TRISG13 = 0;
     TRISGbits.TRISG14 = 0;
     TRISDbits.TRISD12 = 0;
+    
+    LATBbits.LATB0 = 0;
+    LATBbits.LATB1 = 0;
+    LATBbits.LATB2 = 0;
+    LATBbits.LATB3 = 0;
+    LATBbits.LATB4 = 0;
+    LATGbits.LATG13 = 0;
+    LATGbits.LATG14 = 0;
+    LATGbits.LATG12 = 0;
+    
+    //Factory reset button
+    LATAbits.LATA5 = 1;
 }
 
 void setLed(int ledNum, int state)
